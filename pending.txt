@@ -1,0 +1,3 @@
+placing true/false instaed of 0,1 in isVerified and isAdmin attributes of user model.
+have to change from attribute of mailoptions to be generic.
+have to enable jobs table for email sending.
