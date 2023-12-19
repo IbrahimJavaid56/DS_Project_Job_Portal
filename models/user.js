@@ -58,14 +58,11 @@ function validateUser(user){
     });
     return schema.validate(user);
     }
-// User.sync() - This creates the table if it doesn't exist (and does nothing if it already exists).
 async function syncModels() {
   try {
-    // Open the connection
     await sequelize.authenticate();
     console.log('Connection has been established successfully.');
-    // Sync models
-    await sequelize.sync();
+    await sequelize.sync();// Sync models
     console.log('Models synchronized with the database.');
   } catch (error) {
     console.error('Error syncing models with the database:', error);

@@ -15,12 +15,12 @@ async function seedingDatabase() {
 
     // Only seed if the admin doesn't already exist
     if (!existingAdmin) {
-      //const passwordHash = await bcrypt.hash('abcd', 5);
+      const passwordHash = await bcrypt.hash('abcd1234', 5);
         await User.create({
         firstName: 'admin',
         lastName: 'NULL',
         email: 'admin123@gmail.com',
-        //password: passwordHash,
+        password: passwordHash,
         rememberToken: 'NULL',
         isAdmin: true,
         isVerified: true

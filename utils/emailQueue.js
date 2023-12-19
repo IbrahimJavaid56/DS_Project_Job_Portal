@@ -9,7 +9,7 @@ emailQueue.process('emailVerification', async (job) => {
     const token = job.data.verificationToken;
   try
   {
-    let verificationLink = `http://localhost:8080/admin/set-password/?${email}`;
+    let verificationLink = `http://192.168.11.218:8080/#/CreatePassword/?${token}`;
     const mailOptions = {
       from: 'ibrahimjavaid56@gmail.com',
       to: email,

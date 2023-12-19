@@ -1,21 +1,25 @@
-
+import { handleSuccess,handleFailure } from '../utils/helper_function.js';
 import { Applicant } from '../models/applicants.js';
-import { emailQueue } from '../utils/emailQueue.js';
-import path from 'path';
+import { rejectEmailQueue } from '../utils/rejectEmailQueue.js';
+import { DownloadQueue } from '../utils/downloadFileQueue.js';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
 import { Op } from 'sequelize';
+
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    // Specify the destination folder where the uploaded files will be stored
+    cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    // Customize the filename to include the email address with PDF extension
+    const email = req.body.email || "default";
+    const fileName = `${email}.pdf`;
+    cb(null, fileName);
   },
 });
-const upload = multer({ storage: storage }).single('cv');
+const upload = multer({ storage: storage }).single('file');
 const handleFileUpload = (req, res, next) => {
   upload(req, res, function (err) {
   if (err instanceof multer.MulterError) {
@@ -32,6 +36,7 @@ const submitForm = async (req, res) => {
     if (req.file) {
       cvPath = req.file.path;
     }
+    console.log(cvPath);
     try {
       const newApplicant = await Applicant.create({
         applicantId : uuidv4(),
@@ -59,11 +64,11 @@ const submitForm = async (req, res) => {
   };
 const getAllapplicants = async (req, res) => {
   try {
-      const page = parseInt(req.query.page, 10) || 1;
-      const limit = parseInt(req.query.limit, 10) || 10;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
       const search = req.query.search || '';
       const status = req.query.status || '';
-      const offset = (page - 1) * limit;
+      const skip = (page - 1) * limit;
       const whereClause = {
           [Op.or]: [
               { username: { [Op.like]: `%${search}%` } },
@@ -73,7 +78,7 @@ const getAllapplicants = async (req, res) => {
       };
       const applicants = await Applicant.findAndCountAll({
           where: whereClause,
-          offset,
+          skip,
           limit,
       });
 
@@ -119,75 +124,41 @@ const updateApplicantStatus = async (req, res) => {
     if (!applicant) {
       return res.status(404).json({ error: 'Applicant not found' });
     }
-    applicant.status = status;
-    await applicant.save();
-    const rejectionMessage = `
-  <h1>Dear ${applicant.userName},</h1>
-  <p>We regret to inform you that your application has been rejected.</p>
-  <p>Thank you for taking the time to apply. Unfortunately, after careful consideration, we have decided not to proceed with your application at this time.</p>
-  <p>If you have any questions or would like feedback on your application, feel free to reach out to our support team.</p>
-  <p>We appreciate your interest and wish you the best in your future endeavors.</p>
-`;
-    if(status == 'rejected'){
-      try{
-        await sendEmail({
-          email: applicant.email,
-          subject: "Application Status",
-          message: rejectionMessage,
-      });
-      return res.status(200).json({
-        status:"Application Rejected",
-        data:applicant
-      })
-      }catch(error){
-        res.json({
-          message: error.message
-        })
-      }
-     
+    if (status === 'rejected') {
+      applicant.status = status;
+      await applicant.save();
+      await rejectEmailQueue.add('rejectEmailQueue', { user: applicant.email }); // Use the email property
+      res.status(200).json({ message: 'rejection email sent successfully' });
     }
-    res.status(200).json({
-      status:"Application Accepted",
-      data:applicant
-    })
-
   } catch (error) {
     console.error('Error:', error);
+    res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+async function downloadCv(req, res) {
+  try {
+        const { id } = req.params;
+        const applicant = await Applicant.findOne({
+          where: {
+            applicantId: id,
+          },
+        });
+    
+        if (!applicant) {
+          return res.status(404).send('Applicant not found');
+        }
+        const cvFilePath = applicant.cv;
+        console.log(cvFilePath);
+        await DownloadQueue.add({ cvFilePath });
+        res.json({
+         message: "File downloaded successfully",
+        });
+  } catch (error) {
+    console.error('Error initiating download process:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-};
-const downloadCv = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const applicant = await Applicant.findOne({
-      where: {
-        applicantId: id,
-      },
-    });
-
-    if (!applicant) {
-      return res.status(404).send('Applicant not found');
-    }
-    const cvFilePath = applicant.cv
-    console.log('CV File Path:', cvFilePath);
-    if (fs.existsSync(cvFilePath)) {
-      const fileExtension = path.extname(applicant.cv);
-      res.setHeader('Content-Disposition', `attachment; filename="${applicant.userName}_CV${fileExtension}"`);
-      res.setHeader('Content-Type', 'application/pdf'); 
-      const fileStream = fs.createReadStream(cvFilePath);
-      fileStream.pipe(res);
-    } else {
-      res.status(404).send('CV file not found');
-    }
-  } catch (error) {
-    console.error('Error downloading CV:', error);
-    res.status(500).send('Internal server error');
-  }
-};
+}
 
 
-
-
-
-  
 export  { submitForm , handleFileUpload , getAllapplicants , updateApplicantStatus , downloadCv};
