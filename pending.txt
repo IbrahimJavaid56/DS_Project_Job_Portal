@@ -1,0 +1,5 @@
+change password.
+activity logs.
+
+//have to set the token in Bearer using test script in postman.
+//have to set environmental variable,environment in postman.

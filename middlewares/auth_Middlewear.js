@@ -3,52 +3,83 @@ import {User} from "../models/user.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+// const authenticateMiddleware = async (req, res, next) => {
+//     const token = req.headers.token;
+//     if (!token) {
+//       return res.status(401).json({ error: "Unauthorized" });
+//     }
+//     try {
+//       // Verify the token using your secret key
+//       const decoded = jwt.verify(token, process.env.SECRECT_KEY);
+//       const user = await User.findOne({
+//         where: { email: decoded.email },
+//       });
+//       // console.log(user);
+//       if (!user) {
+//         return res.status(401).json({ error: "Unauthorized - User not found" });
+//       }
+//       req.user = user;
+//       next();
+//     } catch (error) {
+//       return res.status(401).json({ error: "Unauthorized - Invalid token" });
+//     }
+//   };
 const authenticateMiddleware = async (req, res, next) => {
-    const token = req.headers.token;
-    if (!token) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    try {
+  const authorizationHeader = req.headers.authorization;
+
+  if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: "Unauthorized - Token missing or invalid" });
+  }
+
+  const token = authorizationHeader.split(' ')[1];
+
+  try {
       // Verify the token using your secret key
       const decoded = jwt.verify(token, process.env.SECRECT_KEY);
+      // const user = await User.findOne({
+      //     where: { email: decoded.email },
+      // });
       const user = await User.findOne({
-        where: { email: decoded.email },
-      });
-      // console.log(user);
+        where: { userId: decodeToken.userId },
+    });
       if (!user) {
-        return res.status(401).json({ error: "Unauthorized - User not found" });
+          return res.status(401).json({ error: "Unauthorized - User not found" });
       }
+
       req.user = user;
       next();
-    } catch (error) {
+  } catch (error) {
       return res.status(401).json({ error: "Unauthorized - Invalid token" });
+  }
+};
+
+const requiredAuth = async (req, res, next) => {
+    try {
+      // Get the token from the Authorization header
+      const token = req.headers.authorization;
+      if (token) {
+        // Verify the token
+        const decodedToken = jwt.verify(token, process.env.SECRECT_KEY);
+        // Check if the user exists and is an admin
+        const existingUser = await User.findOne({
+          where: {
+            id: decodedToken.userId,
+            isAdmin: true,
+          },
+        });
+        if (existingUser) {
+          next();
+        } else {
+          sendApiError(res, "Authenticated user is not an admin", 401);
+        }
+      } else {
+        sendApiError(res, "Authentication token not provided. Redirecting to login.", 401);
+      }
+    } catch (error) {
+      console.log(error.message);
+      sendApiError(res, "Authentication failed. Redirecting to login.", 401);
     }
   };
-  
-  // function isAdminMiddleware(req, res, next) {
-  //   try {
-  //     const header = req.headers.authorization;
-  //     if (!header) return res.status(401).send('Token not available');
-  //     const token = header.split(' ')[1];
-  //     const user = jwt.decode(token);
-  //     if (user.isAdmin) {
-  //       jwt.verify(token, process.env.SECRECT_KEY, (error, decoded) => {
-  //         if (error) {
-  //           console.error('JWT verification failed:', error.message);
-  //           return res.status(401).json({ error: "Unauthorized - Invalid token" });
-  //         } else {
-  //           next();
-  //         }
-  //       });
-  //     } else {
-  //         return res.status(403).json({ error: "Unauthorized - Invalid token" });
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     res.status(500).send('Internal Server Error');
-  //   }
-  // }
-
   const  authenticateAdminMiddleware = async (req, res, next) => {
     const token = req.headers.authorization;
     //console.log(token)
@@ -72,4 +103,4 @@ const authenticateMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized - Invalid token" });
     }
   };
-export {authenticateMiddleware,authenticateAdminMiddleware};
+export {authenticateMiddleware,requiredAuth};

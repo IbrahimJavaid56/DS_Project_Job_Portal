@@ -1,6 +1,7 @@
-import { ApiLogs, validateApiLog } from '../models/api_Logs.js';
+import { ApiLogs } from '../models/api_Logs.js';
 
 const apiDetails = async (req, res, next) => {
+  console.log("testing")
   const logData = {
     requestMethod: req.method,
     requestUrl: req.url,
@@ -14,7 +15,7 @@ const apiDetails = async (req, res, next) => {
     logData.statusCode = res.statusCode;
     try {
       // Validate the log data before creating the log entry
-      validateApiLog(logData);
+      // validateApiLog(logData);
       await ApiLogs.create(logData);
     } catch (error) {
       console.error('Error saving log entry to Sequelize:', error.message);

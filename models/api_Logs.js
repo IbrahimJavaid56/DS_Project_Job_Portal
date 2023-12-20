@@ -41,16 +41,16 @@ const ApiLogs = sequelize.define('ApiLog', {
     timestamps: true,
   });
 // Joi validation schema for ApiLog attributes
-const apiLogJoiSchema = Joi.object({
-    accept: Joi.string().required(),
-    userAgent: Joi.string().required(),
-    connection: Joi.string().required(),
-    acceptEncoding: Joi.string().required(),
-    requestUrl: Joi.string().required(),
-    requestMethod: Joi.string().required(),
-    requestBody: Joi.string().allow(null), 
-    statusCode: Joi.number().integer().allow(null), // Allow null if statusCode is optional
-  });
-// Function to validate ApiLog data using Joi schema
-const validateApiLog = (apiLog) => apiLogJoiSchema.validate(apiLog);
-export { ApiLogs, validateApiLog };
+// const apiLogJoiSchema = Joi.object({
+//     accept: Joi.string().required(),
+//     userAgent: Joi.string().required(),
+//     connection: Joi.string().required(),
+//     acceptEncoding: Joi.string().required(),
+//     requestUrl: Joi.string().required(),
+//     requestMethod: Joi.string().required(),
+//     requestBody: Joi.string().allow(null), 
+//     statusCode: Joi.number().integer().allow(null), // Allow null if statusCode is optional
+//   });
+// // Function to validate ApiLog data using Joi schema
+// const validateApiLog = (apiLog) => apiLogJoiSchema.validate(apiLog);
+export { ApiLogs };

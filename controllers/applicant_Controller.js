@@ -6,7 +6,6 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { Op } from 'sequelize';
 
-
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Specify the destination folder where the uploaded files will be stored
@@ -58,7 +57,7 @@ const submitForm = async (req, res) => {
             const errorMessage = error.errors && error.errors.length > 0 ? error.errors[0].message : 'Validation error';
             return res.status(400).json({ error: errorMessage });
           }
-          console.error('Error creating applicant:', error);
+          console.log('Error creating applicant:', error);
           return res.status(500).json({ error: 'Internal server error' });
         }
   };
@@ -115,6 +114,8 @@ const getAllapplicants = async (req, res) => {
 const updateApplicantStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+  console.log(id);
+  console.log(status);
   try {
     const applicant = await Applicant.findOne({
       where: {
