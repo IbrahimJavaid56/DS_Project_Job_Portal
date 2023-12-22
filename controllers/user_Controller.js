@@ -75,7 +75,7 @@ const createUser = async (req, res) => {
 
     handleSuccess(
       res,
-      200,
+      201,
       newUser,
       "Registration successful. Check your email for verification."
     );
@@ -83,67 +83,34 @@ const createUser = async (req, res) => {
     handleFailure(res, 400, error.message);
   }
 };
-//VERIFICATION ENDPOINT
-const verifyUser = async (req, res) => {
-  const { token } = req.params;
-  console.log(token);
-  try {
-    // Find the user by the verification token
-    const user = await User.findOne({
-      where: {
-        rememberToken: token,
-      },
-    });
-    if (!user) {
-      handleFailure(res, 400, "Invalid verification token");
-      //return res.status(404).json({ message: 'Invalid verification token' });
-    }
-    const affectedRows = await User.update(
-      { rememberToken: null },
-      {
-        where: {
-          email: user.email,
-        },
-      }
-    );
-    // Respond with a success message
-    //res.json({ message: 'Email verification successful!' });
-    handleSuccess(res, 200, "Email verification successful!");
-  } catch (error) {
-    console.error(error);
-    //res.status(500).json({ error: 'Failed to verify email' });
-    handleFailure(res, 500, "Failed to verify email");
-  }
-};
-
-async function hashPass(password,passHash){  
-    const result = await bcrypt.compare(password,passHash);
-    return result; 
-}
 //LOGIN ENDPOINT
 const logIn = async (req, res) => {
   const { email, password } = req.body;
-  console.log(email,password)
   try {
     const existingUser = await User.findOne({
       where: {
         email: email,
       },
     });
-    const user = {
-      "isAdmin":existingUser.isAdmin
-    }
     if (!existingUser) {
       return sendApiError(res, "Email or Password is Incorrect", 400);
     }
-    // Compare the provided password with the hashed password in the database
-    const passwordMatch = hashPass(password, existingUser.password);
+    const passwordMatch = await bcrypt.compare(password, existingUser.password);
     if (!passwordMatch) {
       return sendApiError(res, "Email or Password is Incorrect", 400);
     }
+    const existingUserToSign = {
+      "email": existingUser.email,
+      "isVerified":existingUser.isVerified,
+      "isAdmin": existingUser.isAdmin
+    }
+        const user = {
+      "isAdmin":existingUser.isAdmin
+    }
     // Generate a JWT token
-    const token = jwt.sign({ email: existingUser.email }, process.env.SECRECT_KEY, { expiresIn: '1h' });
-    sendApiResponse(res, { existingUser,token,user }, "Login successfully");
+    const token = jwt.sign({existingUserToSign }
+    , process.env.SECRECT_KEY, { expiresIn: '1h' });
+    sendApiResponse(res, { existingUser,token,user}, "Login successfully");//user
   } catch (error) {
     sendApiError(res, error, 500, "Custom error message");
   }
@@ -179,7 +146,7 @@ function generateVerificationToken() {
   const charactersToGenerateRandomToken =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let token = "";
-  for (let startIndex = 0; startIndex < 12; startIndex++) {
+  for (let startIndex = 0; startIndex < 20; startIndex++) {
     const randomIndex = Math.floor(
       Math.random() * charactersToGenerateRandomToken.length
     );
@@ -191,7 +158,7 @@ function generateVerificationToken() {
 const getUsers = async (req, res) => {
   try {
       const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
+      const limit = parseInt(req.query.limit) || 100;
       const search = req.query.search || '';
       const offset = (page - 1) * limit;
       const whereClause = {
@@ -238,5 +205,4 @@ const getUsers = async (req, res) => {
       });
   }
 };
-export { createUser, verifyUser, logIn, setPassword,forgetPassword,getUsers };
-
+export { createUser,logIn, setPassword,forgetPassword,getUsers };

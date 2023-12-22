@@ -25,7 +25,7 @@ const User = sequelize.define('User', {
     allowNull:false
   },
   password: {
-    type: DataTypes.STRING(50)
+    type: DataTypes.STRING(100)
   },
   rememberToken: {
     type: DataTypes.STRING(50)

@@ -1,11 +1,12 @@
+import { sequelize } from '../config/connect_Db.js';
 import { User} from '../models/user.js';
 import bcrypt from 'bcrypt';
 
 
-//const saltRounds = 10; // Set your desired number of salt rounds
-
 async function seedingDatabase() {
   try {
+    await sequelize.sync({force: true})
+    console.log ("connected")
     // Check if there are existing users
     const existingAdmin = await User.findOne({
       where: {
@@ -15,7 +16,9 @@ async function seedingDatabase() {
 
     // Only seed if the admin doesn't already exist
     if (!existingAdmin) {
-      const passwordHash = await bcrypt.hash('abcd1234', 5);
+        const salt = await bcrypt.genSalt(10);
+        console.log(salt);
+        const passwordHash = await bcrypt.hash('admin@123',salt);
         await User.create({
         firstName: 'admin',
         lastName: 'NULL',
@@ -33,5 +36,6 @@ async function seedingDatabase() {
     console.error('Error seeding database:', error);
   }
 }
-export { seedingDatabase };
+seedingDatabase();
+// export { seedingDatabase };
 

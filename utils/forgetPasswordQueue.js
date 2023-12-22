@@ -2,11 +2,9 @@ import Queue from 'bull';
 const forgetPassQueue = new Queue('sendPasswordResetEmail');
 import { transport } from '../config/nodemailer_Config.js';
 
-
+//forgetPasswordQueue.
 forgetPassQueue.process('sendPasswordResetEmail', async (job) => {
     const {user}=job.data;
-        console.log("job",job);
-        console.log("job.data",job.data);
   try
   {
     let Link = `http://192.168.11.177:8080/set-password/${user.rememberToken}`;
@@ -27,7 +25,6 @@ forgetPassQueue.process('sendPasswordResetEmail', async (job) => {
     // Transport object for sending emails
     await transport.sendMail(mailOptions);
     console.log(`Email sent to ${user.email}`);
-    // Remove the job details from the Jobs table
   } catch (error) {
     console.log('Failed to send email', error);
   }

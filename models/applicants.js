@@ -1,6 +1,6 @@
-import {DataTypes} from 'sequelize';
+import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/connect_Db.js';
-
+import Joi from 'joi';
 const Applicant = sequelize.define('Applicant', {
     applicantId: {
         type: DataTypes.UUID,
@@ -59,6 +59,19 @@ const Applicant = sequelize.define('Applicant', {
     timestamps: true,
 });
 
-Applicant.sync();
+// Joi validation for the required fields in the Applicant model
+function validateApplicant(applicant) {
+    const schema = Joi.object({
+        userName: Joi.string().alphanum().min(4).max(15).required(),
+        email: Joi.string().required().email(),
+        qualification: Joi.string().required(),
+        cnic: Joi.string().pattern(/^\d{13}$/).required(),
+        address: Joi.string().required(),
+        phoneNumber: Joi.string().pattern(/^\d{11}$/).required(),
+        age: Joi.number().integer().positive().max(120).required()
+    });
 
-export {Applicant}
+    return schema.validate(applicant);
+}
+
+export { Applicant, validateApplicant };

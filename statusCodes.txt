@@ -1,0 +1,4 @@
+401 = unauthenticated.
+403 = forbidden-unauthorized.
+201 = new resource has been created on server.
+400 = bad request from client(i.e validation error)

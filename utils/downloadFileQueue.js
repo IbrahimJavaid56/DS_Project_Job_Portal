@@ -5,10 +5,8 @@ import Queue from 'bull';
 
 const DownloadQueue = new Queue('downloadCsvFiles');
 
-
   async function downloadFile(fileName) {
     try {
-      console.log(fileName);
       const emailRegex = /uploads\\(.+?)\.pdf/;
       const match = fileName.match(emailRegex);
 
@@ -22,10 +20,10 @@ const DownloadQueue = new Queue('downloadCsvFiles');
       // removing the leading backslash from currentDir
       const uploadFolderPath = path.join(currentDir.substr(1), '..', 'uploads');
       const fileUrl = path.join(uploadFolderPath, `${updatedFileName}.pdf`);
-      console.log('fileUrl-->', fileUrl);
+      //console.log('fileUrl-->', fileUrl);
   
       const downloadFolderPath = path.join(os.homedir(), 'Downloads');
-      console.log('downloadFolderPath-->', downloadFolderPath);
+      //console.log('downloadFolderPath-->', downloadFolderPath);
   
       // Check if the file exists before proceeding
       try {
@@ -41,6 +39,7 @@ const DownloadQueue = new Queue('downloadCsvFiles');
       console.log(`File ${fileName} has been successfully downloaded to the download folder.`);
   
     //   // Delete the file after successful download
+    //   const fileToDelete = fileUrl;
     //   await fs.unlink(fileUrl);
     //   console.log('File deleted successfully');
     } catch (err) {
@@ -65,3 +64,19 @@ const DownloadQueue = new Queue('downloadCsvFiles');
   });
   
 export { DownloadQueue };
+
+// const deleteFileAfter30Minutes = async (fileUrlUp) => {
+//     try {
+//       // Delete the file
+//       await fs.unlink(fileUrlUp);
+//       console.log('File deleted successfully:', fileUrlUp);
+//     } catch (error) {
+//       console.error('Error deleting file:', error);
+//     }
+//   };
+  
+//   // Schedule the file deletion job every 30 minutes
+//   cron.schedule('*/30 * * * *', () => {
+//     const fileUrlUp = fileUrl // Provide the actual file path here
+//     deleteFileAfter30Minutes(fileUrlUp);
+//   });

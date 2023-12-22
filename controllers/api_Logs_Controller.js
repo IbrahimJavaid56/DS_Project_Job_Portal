@@ -1,7 +1,7 @@
 import { ApiLogs } from '../models/api_Logs.js';
 
 const apiDetails = async (req, res, next) => {
-  console.log("testing")
+  //console.log("testing")
   const logData = {
     requestMethod: req.method,
     requestUrl: req.url,

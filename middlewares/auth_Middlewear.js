@@ -3,27 +3,7 @@ import {User} from "../models/user.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-// const authenticateMiddleware = async (req, res, next) => {
-//     const token = req.headers.token;
-//     if (!token) {
-//       return res.status(401).json({ error: "Unauthorized" });
-//     }
-//     try {
-//       // Verify the token using your secret key
-//       const decoded = jwt.verify(token, process.env.SECRECT_KEY);
-//       const user = await User.findOne({
-//         where: { email: decoded.email },
-//       });
-//       // console.log(user);
-//       if (!user) {
-//         return res.status(401).json({ error: "Unauthorized - User not found" });
-//       }
-//       req.user = user;
-//       next();
-//     } catch (error) {
-//       return res.status(401).json({ error: "Unauthorized - Invalid token" });
-//     }
-//   };
+
 const authenticateMiddleware = async (req, res, next) => {
   const authorizationHeader = req.headers.authorization;
 
@@ -103,4 +83,4 @@ const requiredAuth = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized - Invalid token" });
     }
   };
-export {authenticateMiddleware,requiredAuth};
+export {authenticateMiddleware};

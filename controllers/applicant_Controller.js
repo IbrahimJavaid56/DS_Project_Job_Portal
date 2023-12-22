@@ -1,5 +1,5 @@
 import { handleSuccess,handleFailure } from '../utils/helper_function.js';
-import { Applicant } from '../models/applicants.js';
+import { Applicant,validateApplicant } from '../models/applicants.js';
 import { rejectEmailQueue } from '../utils/rejectEmailQueue.js';
 import { DownloadQueue } from '../utils/downloadFileQueue.js';
 import multer from 'multer';
@@ -29,42 +29,59 @@ const handleFileUpload = (req, res, next) => {
   next();
 });
 };
+// const handleFailure = (res, statusCode, message) => {
+//   return res.status(statusCode).json({ success: false, message });
+// };
 const submitForm = async (req, res) => {
-    const { userName, email, qualification, cnic, address, phoneNumber, status, age, isDelete } = req.body;
-    let cvPath = '';  
-    if (req.file) {
-      cvPath = req.file.path;
-    }
-    console.log(cvPath);
-    try {
-      const newApplicant = await Applicant.create({
-        applicantId : uuidv4(),
-        userName,
-        email,
-        qualification,
-        cnic,
-        address,
-        phoneNumber,
-        cv: cvPath,
-        status,
-        age,
-        isDelete,
-      });
-  
-      return res.status(201).json({ message: 'Applicant created successfully', data: newApplicant });
-    } catch (error) {
-        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
-            const errorMessage = error.errors && error.errors.length > 0 ? error.errors[0].message : 'Validation error';
-            return res.status(400).json({ error: errorMessage });
-          }
-          console.log('Error creating applicant:', error);
-          return res.status(500).json({ error: 'Internal server error' });
-        }
-  };
+  const { error } = validateApplicant(req.body);
+
+  if (error) {
+    console.log('Validation error:', error.message);
+    return handleFailure(res, 400, `Validation error: ${error.message}`);
+  }
+
+  const { userName, email, qualification, cnic, address, phoneNumber, status, age, isDelete } = req.body;
+  let cvPath = '';
+
+  if (req.file) {
+    cvPath = req.file.path;
+  }
+// // Remove CV files and destroy job applications
+//   for (const job of rejectedJobs) {
+//   const pdfPath = `/home/raja/Express/Project#1/cvs/${job.email}.pdf`;
+//   // Check if the CV file exists before attempting to delete
+//   if (fs.existsSync(pdfPath)) {
+//     fs.unlinkSync(pdfPath);
+//   }
+//}
+  try {
+    const newApplicant = await Applicant.create({
+      applicantId: uuidv4(),
+      userName,
+      email,
+      qualification,
+      cnic,
+      address,
+      phoneNumber,
+      cv: cvPath,
+      status,
+      age,
+      isDelete,
+    });
+
+    return res.status(201).json({ message: 'Applicant created successfully', data: newApplicant });
+  } catch (error) {
+    console.error('Error creating new applicant:', error);
+
+    return handleFailure(res, 500, 'Failed to create new applicant');
+  }
+};
+
+//GET ALL APPLICANTS
 const getAllapplicants = async (req, res) => {
   try {
       const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
+      const limit = parseInt(req.query.limit) || 100;
       const search = req.query.search || '';
       const status = req.query.status || '';
       const skip = (page - 1) * limit;
@@ -130,6 +147,11 @@ const updateApplicantStatus = async (req, res) => {
       await applicant.save();
       await rejectEmailQueue.add('rejectEmailQueue', { user: applicant.email }); // Use the email property
       res.status(200).json({ message: 'rejection email sent successfully' });
+    }
+    else if(status === 'accepted'){
+      applicant.status = status;
+      await applicant.save();
+      res.status(200).json({ message: 'Applicant has been accepted.' });
     }
   } catch (error) {
     console.error('Error:', error);
