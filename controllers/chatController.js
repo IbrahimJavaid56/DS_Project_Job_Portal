@@ -12,7 +12,7 @@ export async function requestMethod(msg){
     try {
       const openaiEndpoint = "https://api.openai.com/v1/chat/completions";
       //const openaiApiKey = "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"; // OpenAI API key
-        const openaiApiKey = "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"
+      const openaiApiKey = "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"
       const response = await axios.post(
         openaiEndpoint,
         {

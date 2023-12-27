@@ -6,10 +6,10 @@ const logUserActivity = async (req, res, next) => {
     console.log(path)
     try {
         let logData = {};
-        if (req.path === '/auth/create-user' && req.method === 'POST') {
+        if (req.path === '/create-user' && req.method === 'POST') {
             // For user creation
-            const { firstName, lastName, email } = req.body;
-            const userName = `${firstName} ${lastName}`;
+            const { firstName, email } = req.body;
+            const userName = `${firstName}`;
             logData = {
                 action: 'User Creation',
                 username: userName,
@@ -17,14 +17,14 @@ const logUserActivity = async (req, res, next) => {
                 details: `New User ${userName} (${email})created`,
             };
             console.log('User Creation log detected');
-        } else if (req.path === '/auth/login' && req.method === 'POST') {
+        } else if (req.path === '/login' && req.method === 'POST') {
             // For user login
-            const { email } = req.body;
+             const { email } = req.body;
             // Fetch user details from the database based on the provided email
             const user = await User.findOne({ where: { email } });
             if (user) {
-                const { firstName, lastName } = user;
-                const userName = `${firstName} ${lastName}`;
+                const { firstName } = user;
+                const userName = `${firstName}`;
                 logData = {
                     action: 'User Login',
                     username: userName,
@@ -35,13 +35,14 @@ const logUserActivity = async (req, res, next) => {
             } else {
                 console.log(`User with this email: ${email} not found`);
             }
-        } else if (req.path === '/auth/forget-password/' && req.method === 'POST') {
+        } else if (req.path === '/forget-password' && req.method === 'POST') {
             // For forget password
+            console.log('inside forget password');
             const { email } = req.body;
             const user = await User.findOne({ where: { email } });
             if (user) {
-                const { firstName, lastName } = user;
-                const userName = `${firstName} ${lastName}`;
+                const { firstName } = user;
+                const userName = `${firstName}`;
                 logData = {
                     action: 'Forget Password',
                     username: userName,
@@ -52,20 +53,7 @@ const logUserActivity = async (req, res, next) => {
             } else {
                 console.log(`User with email ${email} not found`);
             }
-        } else if (req.path.startsWith('/auth/set-password/') && req.method === 'POST') {
-            // For set password
-            const { email } = req.params;
-            const user = await User.findOne({ where: { email } });
-            const userName = `${user.firstName} ${user.lastName}`;
-            logData = {
-                action: 'Set Password',
-                username: userName,
-                userEmail: email,
-                details: `Password reset completed with eamil ${email}`,
-                //userAgent: req.headers["user-agent"]
-            };
-            console.log('Set Password log action detected');
-        } else {
+        }  else {
             // If the route doesn't match any specific path or method, proceed to next middleware
             return next();
         }

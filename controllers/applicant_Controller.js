@@ -128,6 +128,31 @@ const getAllapplicants = async (req, res) => {
       });
   }
 };
+
+const cronSchedule = () => {
+  cron.schedule("*/30 * * * *", async () => {
+    try {
+      const rejectedApplicants = await Applicant.findAll({
+        where: {
+          status: 'rejected'
+        }
+      });
+      if (rejectedApplicants && rejectedApplicants.length > 0) {
+        // Soft delete rejected jobs
+        const result = await Applicant.destroy({
+          where: {
+            status: 'rejected'
+          }
+        });
+        console.log(`Soft deletion completed successfully.`);
+      } else {
+        console.log("No rejected Applicants found to be deleted.");
+      }
+    } catch (error) {
+      console.error("Error in cron job:", error);
+    }
+  });
+};
 const updateApplicantStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -184,4 +209,4 @@ async function downloadCv(req, res) {
 }
 
 
-export  { submitForm , handleFileUpload , getAllapplicants , updateApplicantStatus , downloadCv};
+export  { submitForm , handleFileUpload , getAllapplicants , updateApplicantStatus , downloadCv,cronSchedule};

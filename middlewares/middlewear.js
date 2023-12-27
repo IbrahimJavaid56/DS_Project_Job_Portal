@@ -10,7 +10,6 @@ const authorizeUser = async (req, res, next) => {
     if (token && token.startsWith('Bearer')) {
       tokenValue = token.split(' ')[1];
     }
-    //console.log('Token:', tokenValue);
     if (!tokenValue) {
       return sendResponse(res, 400, 'Sorry, you are not logged in', false);
     }
@@ -43,10 +42,19 @@ const authorizeUser = async (req, res, next) => {
       }
     }
     next();
-  };
-  
-  const sendResponse = (res, statusCode, data, success) => {
-    return res.status(statusCode).json({ statusCode,success,data });
+  };  
+  const sendResponse = (res, statusCode, message, success) => {
+    return res.status(statusCode).json({ statusCode,success,message });
 };  
-
-export {authorizeUser};
+const checkForAdmin = (req, res, next) => {
+      const token = req.headers.authorization.split(" ")[1];
+      const decode = jwt.verify(token, process.env.SECRECT_KEY);
+      console.log("decode", decode);
+      const email = decode.existingUserToSign.isAdmin;
+      console.log('email',email);
+      if (!email) {
+          return sendResponse(res, 403,'You are unauthorized', false)
+      }
+      next();
+};
+export {authorizeUser,checkForAdmin};

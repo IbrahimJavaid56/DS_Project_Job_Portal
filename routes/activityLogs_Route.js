@@ -1,6 +1,7 @@
 import express from 'express';
 import { logUserActivity } from '../middlewares/activity_logs.js';
 import { getAllLogs } from '../controllers/activity_Logs_Controller.js';
+//import { checkForAdmin } from '../middlewares/middlewear.js';
 const activityLogs = express.Router()
 
 activityLogs.get('/log/get-logs',logUserActivity,getAllLogs);

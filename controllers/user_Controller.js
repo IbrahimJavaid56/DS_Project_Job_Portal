@@ -13,9 +13,16 @@ dotenv.config();
 
 // Validation schema for password and confirm password
 const setPasswordSchema = Joi.object({
-  password: Joi.string().min(6).required(),
-  confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
+  password: Joi.string().min(6).trim().required(),
+  confirmPassword: Joi.string().trim().valid(Joi.ref("password")).required(),
 });
+//Change Password Schema
+const changePasswordSchema = Joi.object({
+  password: Joi.string().min(6).trim().required(),
+  newPassword:Joi.string().min(6).trim().required(),
+  confirmNewPassword: Joi.string().trim().valid(Joi.ref("newPassword")).required(),
+});
+//SET PASSWORD
 const setPassword = async (req, res) => {
   try {
     // Validate the password and confirm password
@@ -33,7 +40,8 @@ const setPassword = async (req, res) => {
     if (!user) {
       throw new Error("Invalid token");
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     // Update user's password and set isVerified to true
     await user.update({
       password: hashedPassword,
@@ -46,6 +54,7 @@ const setPassword = async (req, res) => {
     handleFailure(res, 500,error.message);
   }
 };
+//CREATE USER
 const createUser = async (req, res) => {
   try {
     const { error } = validateUser(req.body);
@@ -83,6 +92,77 @@ const createUser = async (req, res) => {
     handleFailure(res, 400, error.message);
   }
 };
+//CHANGE PASSWORD
+const changePassword = async (req, res) => {
+  try {
+    const { error } = changePasswordSchema.validate(req.body);
+    if (error) {
+      return sendError(res, 400, `Validation error: ${error.message}`);
+    }
+    const token = req.headers.authorization.split(" ")[1];
+    const decode = jwt.verify(token, process.env.SECRECT_KEY);
+    console.log("decode", decode);
+    const email = decode.existingUserToSign.email;
+    const { password, newPassword, confirmNewPassword } = req.body;
+
+    if (email) {
+      const user = await User.findOne({
+        where: {
+          email: email,
+        },
+      });
+      const compareOldPassword = await bcrypt.compare(
+        password,
+        user.password
+      );
+
+      if (!compareOldPassword) {
+        return res.status(400).json({ message: 'Entered Password does not match with the old one.' });
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        return res.status(400).json({ message: "New password and confirm password do not match." });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      // Update the user's password
+      await User.update(
+        { password: hashedPassword },
+        { where: { email: user.email } }
+      );
+
+      // Send success response
+      return sendSuccess(res, 200, 'Password changed successfully!');
+    } else {
+      // Invalid email or password
+      return sendError(res, 400, 'Invalid email or password');
+    }
+  } catch (error) {
+    console.error("error-->", error);
+    // Internal server error
+    return sendError(res, 500, 'Internal server error');
+  }
+};
+
+// Helper functions for consistent response formatting
+function sendSuccess(res, statusCode, message) {
+  res.status(statusCode).json({
+    status: 'success',
+    statusCode,
+    message,
+  });
+}
+// Helper functions for consistent response formatting
+function sendError(res, statusCode, errorMessage) {
+  res.status(statusCode).json({
+    status: 'error',
+    statusCode,
+    error: errorMessage,
+  });
+}
+
 //LOGIN ENDPOINT
 const logIn = async (req, res) => {
   const { email, password } = req.body;
@@ -205,4 +285,4 @@ const getUsers = async (req, res) => {
       });
   }
 };
-export { createUser,logIn, setPassword,forgetPassword,getUsers };
+export { createUser,logIn, setPassword,forgetPassword,getUsers,changePassword };

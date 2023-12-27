@@ -48,9 +48,9 @@ const User = sequelize.define('User', {
 
 function validateUser(user){
     const schema =Joi.object({
-        firstName: Joi.string().min(1).max(30).required(),
-        lastName: Joi.string().min(1).max(30).required(),
-        email: Joi.string().required().email(),
+        firstName: Joi.string().trim().max(50).required().regex(/^[a-zA-Z][a-zA-Z0-9 ]*$/).message('First Name must be valid'),
+        lastName: Joi.string().trim().max(50).required().regex(/^[a-zA-Z][a-zA-Z0-9 ]*$/).message('Last Name must be valid'),
+        email: Joi.string().required().email().regex(/^[a-zA-Z0-9._%+-]+@(gmail|hotmail|outlook)\.[a-zA-Z]{2,}$/).message('Invalid email'),
         password: Joi.string(),
         rememberToken: Joi.string(),
         isAdmin: Joi.boolean(),

@@ -38,10 +38,10 @@ const DownloadQueue = new Queue('downloadCsvFiles');
       await fs.copyFile(fileUrl, localFilePath);
       console.log(`File ${fileName} has been successfully downloaded to the download folder.`);
   
-    //   // Delete the file after successful download
-    //   const fileToDelete = fileUrl;
-    //   await fs.unlink(fileUrl);
-    //   console.log('File deleted successfully');
+      // Delete the file after successful download
+      const fileToDelete = fileUrl;
+      await fs.unlink(fileUrl);
+      console.log('File deleted successfully');
     } catch (err) {
       console.error('Error during download process:', err);
       throw err;

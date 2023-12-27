@@ -2,7 +2,6 @@ import { sequelize } from '../config/connect_Db.js';
 import { User} from '../models/user.js';
 import bcrypt from 'bcrypt';
 
-
 async function seedingDatabase() {
   try {
     await sequelize.sync({force: true})
